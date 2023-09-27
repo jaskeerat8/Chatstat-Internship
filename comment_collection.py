@@ -26,8 +26,8 @@ collection = "comments"
 current_datetime = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 current_date = datetime.now().strftime("%d-%m-%Y")
 
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 s3_client = session.resource("s3")
 
 
@@ -76,6 +76,7 @@ comments_cursor = db[collection].find(filtered_ids, {"_id":1, "platform":1, "ale
 for json_value in comments_cursor:
     comments_df = comments_df.append(json_value, ignore_index = True)
 
+comments_df["result_json"] = comments_df["result"]
 comments_df["result"] = comments_df["result"].apply(final_result)
 comments_df = comments_df.reset_index(drop = True)
 
