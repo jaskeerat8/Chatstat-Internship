@@ -38,8 +38,8 @@ secret_name = "dashboard"
 current_date = datetime.now().strftime("%d-%m-%Y")
 yesterday_date = (datetime.now() - timedelta(days=1)).strftime("%d-%m-%Y")
 
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 s3_client = session.resource("s3")
 
 
@@ -55,15 +55,17 @@ s3_filter_loc = value["filter_comments_location"]
 
 
 #Filtering Comments
+users_df = file_data(s3_raw_loc, yesterday_date, current_date, "users")
 childrens_df = file_data(s3_raw_loc, yesterday_date, current_date, "childrens")
 accounts_df = file_data(s3_raw_loc, yesterday_date, current_date, "accounts")
 contents_df = file_data(s3_raw_loc, yesterday_date, current_date, "contents")
 
-childrens_accounts_df = pd.merge(childrens_df, accounts_df, left_on = "accounts_childrens", right_on = "_id_accounts", how = "inner")
-childrens_accounts_contents_df =  pd.merge(childrens_accounts_df, contents_df, left_on = "content_accounts", right_on = "_id_contents", how = "inner")
+users_childrens_df = pd.merge(users_df, childrens_df, left_on = "children_users", right_on = "_id_childrens", how = "inner")
+users_childrens_accounts_df = pd.merge(users_childrens_df, accounts_df, left_on = "accounts_childrens", right_on = "_id_accounts", how = "inner")
+users_childrens_accounts_contents_df =  pd.merge(users_childrens_accounts_df, contents_df, left_on = "content_accounts", right_on = "_id_contents", how = "inner")
 
 filter_bucket_name = s3_filter_loc.split("/")[2]
 filter_key = "/".join(s3_filter_loc.split("/")[3:]) + "filter.txt"
 
 object = s3_client.Object(filter_bucket_name, filter_key)
-object.put(Body = '\n'.join([i for i in childrens_accounts_contents_df["comments_contents"].unique() if str(i) != "nan"]))
+object.put(Body = '\n'.join([i for i in users_childrens_accounts_contents_df["comments_contents"].unique() if str(i) != "nan"]))
