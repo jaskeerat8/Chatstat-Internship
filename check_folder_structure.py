@@ -5,8 +5,8 @@ import boto3
 #Setting up Boto3 Client
 region_name = "ap-southeast-2"
 secret_name = "dashboard"
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 s3 = session.client("s3")
 
 #Reading Data from Secrets Manager
