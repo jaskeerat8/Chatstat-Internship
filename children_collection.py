@@ -14,8 +14,8 @@ collection = "childrens"
 current_datetime = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 current_date = datetime.now().strftime("%d-%m-%Y")
 
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 
 
 #Reading Data from Secrets Manager
