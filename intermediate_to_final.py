@@ -12,8 +12,8 @@ secret_name = "dashboard"
 current_date = datetime.now().strftime("%d-%m-%Y")
 current_datetime = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 s3_client = session.resource("s3")
 
 
@@ -72,22 +72,12 @@ inter_df.reset_index(drop = True, inplace= True)
 
 
 #Pushing data to final s3
-if(final_flag == 1):
-    
-    ############### DELETE THIS ###############
-    final_df.drop(["school"], axis = 1, inplace = True)
-    ############### DELETE THIS ###############
-    
+if(final_flag == 1):    
     total_df = pd.concat([final_df, inter_df])
     total_df.drop_duplicates(inplace = True, keep = "last")
 else:
     inter_df.drop_duplicates(inplace = True)
     total_df = inter_df.copy()
-
-############### DELETE THIS ###############
-if("school" not in total_df.columns):
-    total_df["school"] = [random.choice(["a", "b", "c", "d"]) for _ in range(len(total_df))]
-############### DELETE THIS ###############
 
 csv_string = total_df.to_csv(index = False, sep = ',', quotechar = '"')
 
