@@ -11,8 +11,8 @@ from sqlalchemy import create_engine
 region_name = "ap-southeast-2"
 secret_name = "rdsMYSQL"
 
-session = boto3.session.Session(aws_access_key_id = "AKIAQBTIQ6VDCHHWNCNV", aws_secret_access_key = "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")
-sm_client = session.client(service_name = "secretsmanager", region_name = region_name)
+session = boto3.session.Session(region_name = region_name)
+sm_client = session.client(service_name = "secretsmanager")
 s3_client = session.resource("s3")
 
 
@@ -29,7 +29,7 @@ host = value["endpoint"]
 user = value["user"]
 password = value["password"]
 database = value["database"]
-table = value["final_table"]
+table = value["parent_table"]
 final_location = value["final_location"]
 
 
