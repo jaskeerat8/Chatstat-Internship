@@ -68,6 +68,9 @@ users_childrens_accounts_df = pd.merge(users_childrens_df, accounts_df, left_on 
 users_childrens_accounts_contents_df =  pd.merge(users_childrens_accounts_df, contents_df, left_on = "content_accounts", right_on = "_id_contents", how = "inner")
 users_childrens_accounts_contents_comments_df = pd.merge(users_childrens_accounts_contents_df, comments_df, left_on = "comments_contents", right_on = "_id_comments", how = "left")
 
+users_superAdmin_df = users_df[(users_df["role_users"].str.lower() == "superadmin") & ~(users_df["email_users"].isin(users_childrens_df["email_users"]))]
+users_childrens_accounts_contents_comments_df = pd.concat([users_childrens_accounts_contents_comments_df, users_superAdmin_df])
+
 users_childrens_accounts_contents_comments_df.drop_duplicates(inplace = True)
 new_columns = {old_col: old_col.lstrip("_") for old_col in users_childrens_accounts_contents_comments_df.columns}
 users_childrens_accounts_contents_comments_df = users_childrens_accounts_contents_comments_df.rename(columns = new_columns)
