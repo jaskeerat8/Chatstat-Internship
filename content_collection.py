@@ -4,7 +4,6 @@ import json
 import boto3
 import pymongo
 import pandas as pd
-from sshtunnel import SSHTunnelForwarder
 from datetime import datetime
 
 
@@ -34,6 +33,7 @@ current_date = datetime.now().strftime("%d-%m-%Y")
 
 session = boto3.session.Session(region_name = region_name)
 sm_client = session.client(service_name = "secretsmanager")
+ec2_client = session.client(service_name = "ec2")
 
 
 #Reading Data from Secrets Manager
@@ -43,21 +43,14 @@ try:
 except Exception as e:
     print(e)
 
-remote_server_ip = value["remote_server_ip"]
-remote_server_username = value["remote_server_username"]
-remote_server_password = value["remote_server_password"]
 
-server = SSHTunnelForwarder(
-    ssh_address_or_host = (remote_server_ip, 22),
-    ssh_username = remote_server_username,
-    ssh_password = remote_server_password,
-    remote_bind_address = ('localhost', 9017),
-    local_bind_address = ('localhost', 9017),
-    ssh_pkey = None
-)
-server.start()
+#Getting Public IP of EC2 server
+ec2_response = ec2_client.describe_instances(InstanceIds=[value["ec2_instance_id"]])
+ec2_ip = ec2_response["Reservations"][0]["Instances"][0].get("PublicIpAddress")
 
-mongo_client = pymongo.MongoClient(f"""mongodb://{value["mongodb_user"]}:{value["mongodb_password"]}@localhost:9017/{value["mongodb_database"]}""")
+
+#Connecting to Mongodb
+mongo_client = pymongo.MongoClient(f"""mongodb://{value["mongodb_user"]}:{value["mongodb_password"]}@{ec2_ip}:{value["mongodb_port"]}/{value["mongodb_database"]}""")
 db = mongo_client[value["mongodb_database"]]
 
 collection_names = db.list_collection_names()
@@ -89,7 +82,6 @@ s3_client.put_object(Bucket = bucket, Key = key, Body = csv_string)
 print(f"Completed {collection} Collection, Saving file to:", "Bucket:", bucket, "Key:", key)
 
 
-# Stop the tunnel
+#Close the Clients
 contents_cursor.close()
 mongo_client.close()
-server.stop()
