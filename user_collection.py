@@ -43,7 +43,7 @@ print("Collections_Avaiable:", collection_names, "\n")
 with mongo_client.start_session() as mongo_session:
     #Getting User Data
     users_df = pd.DataFrame()
-    users_cursor = db[collection].find({}, {"_id":1, "children":1, "name":1, "email":1, "role":1}, no_cursor_timeout = True, session=mongo_session)
+    users_cursor = db[collection].find({}, {"_id":1, "children":1, "name":1, "email":1, "role":1}, no_cursor_timeout = True, session = mongo_session)
 
     for json_value in users_cursor:
         users_df = pd.concat([users_df, pd.DataFrame([json_value])], ignore_index=True)
