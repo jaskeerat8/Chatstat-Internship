@@ -39,15 +39,16 @@ collection_names = db.list_collection_names()
 print("Collections_Avaiable:", collection_names, "\n")
 
 
-#Getting Accounts Data
-accounts_df = pd.DataFrame()
-accounts_cursor = db[collection].find({}, {"_id":1, "platform":1, "username":1, "content":1}, no_cursor_timeout = True)
+with mongo_client.start_session() as mongo_session:
+    #Getting Accounts Data
+    accounts_df = pd.DataFrame()
+    accounts_cursor = db[collection].find({}, {"_id":1, "platform":1, "username":1, "content":1}, no_cursor_timeout = True, session = mongo_session)
 
-for json_value in accounts_cursor:
-    accounts_df = accounts_df.append(json_value, ignore_index = True)
+    for json_value in accounts_cursor:
+        accounts_df = pd.concat([accounts_df, pd.DataFrame([json_value])], ignore_index=True)
 
-accounts_df = accounts_df.explode("content")
-accounts_df = accounts_df.reset_index(drop=True)
+    accounts_df = accounts_df.explode("content")
+    accounts_df = accounts_df.reset_index(drop=True)
 
 
 #Saving to s3 location
