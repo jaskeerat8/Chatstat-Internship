@@ -17,11 +17,11 @@ def final_result(x):
         else:
             category = max(category_dict, key = category_dict.get)
             category = re.findall(r'[A-Z][^A-Z&]*|\&', category)
-            return " ".join(category).title().strip()
+            return " ".join(category).title().strip().replace("-", "")
     elif(str(x) in ["nan", "None"]):
         return "No"
     else:
-        return str(x).title().strip()
+        return str(x).title().strip().replace("-", "")
 
 
 #Setting up Boto3 Client
@@ -57,17 +57,18 @@ collection_names = db.list_collection_names()
 print("Collections_Avaiable:", collection_names, "\n")
 
 
-#Getting Contents Data
-contents_df = pd.DataFrame()
-contents_cursor = db[collection].find({}, {"_id":1, "platform":1, "alert":1, "comments":1, "result":1, "createTime":1}, no_cursor_timeout = True)
+with mongo_client.start_session() as mongo_session:
+    #Getting Contents Data
+    contents_df = pd.DataFrame()
+    contents_cursor = db[collection].find({}, {"_id":1, "platform":1, "alert":1, "comments":1, "result":1, "createTime":1}, no_cursor_timeout = True, session = mongo_session)
 
-for json_value in contents_cursor:
-    contents_df = contents_df.append(json_value, ignore_index = True)
+    for json_value in contents_cursor:
+        contents_df = pd.concat([contents_df, pd.DataFrame([json_value])], ignore_index=True)
 
-contents_df = contents_df.explode("comments")
-contents_df["result_json"] = contents_df["result"]
-contents_df["result"] = contents_df["result"].apply(final_result)
-contents_df = contents_df.reset_index(drop = True)
+    contents_df = contents_df.explode("comments")
+    contents_df["result_json"] = contents_df["result"]
+    contents_df["result"] = contents_df["result"].apply(final_result)
+    contents_df = contents_df.reset_index(drop = True)
 
 
 #Saving to s3 location
