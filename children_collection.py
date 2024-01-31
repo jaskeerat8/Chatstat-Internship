@@ -39,15 +39,16 @@ collection_names = db.list_collection_names()
 print("Collections_Avaiable:", collection_names, "\n")
 
 
-#Getting Children Data
-childrens_df = pd.DataFrame()
-childrens_cursor = db[collection].find({}, {"_id":1, "user":1, "name":1, "age":1, "gender":1, "accounts":1}, no_cursor_timeout = True)
+with mongo_client.start_session() as mongo_session:
+    #Getting Children Data
+    childrens_df = pd.DataFrame()
+    childrens_cursor = db[collection].find({}, {"_id":1, "user":1, "name":1, "age":1, "gender":1, "accounts":1}, no_cursor_timeout = True, session = mongo_session)
 
-for json_value in childrens_cursor:
-    childrens_df = childrens_df.append(json_value, ignore_index = True)
+    for json_value in childrens_cursor:
+        childrens_df = pd.concat([childrens_df, pd.DataFrame([json_value])], ignore_index=True)
 
-childrens_df = childrens_df.explode("accounts")
-childrens_df = childrens_df.reset_index(drop = True)
+    childrens_df = childrens_df.explode("accounts")
+    childrens_df = childrens_df.reset_index(drop = True)
 
 
 #Saving to s3 location
