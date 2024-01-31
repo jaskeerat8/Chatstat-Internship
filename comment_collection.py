@@ -62,18 +62,19 @@ filtered_id_comments = s3_client.Object(filter_bucket_name, filter_key).get()['B
 filtered_id_comments = [ObjectId(id) for id in filtered_id_comments]
 
 
-#Getting Comments Data
-comments_df = pd.DataFrame()
+with mongo_client.start_session() as mongo_session:
+    #Getting Comments Data
+    comments_df = pd.DataFrame()
 
-filtered_ids = { '_id': { '$in': filtered_id_comments } }
-comments_cursor = db[collection].find(filtered_ids, {"_id":1, "platform":1, "alert":1, "commentTime":1, "result":1}, no_cursor_timeout = True)
+    filtered_ids = { "_id": { "$in": filtered_id_comments } }
+    comments_cursor = db[collection].find(filtered_ids, {"_id":1, "platform":1, "alert":1, "commentTime":1, "result":1}, no_cursor_timeout = True, session = mongo_session)
 
-for json_value in comments_cursor:
-    comments_df = comments_df.append(json_value, ignore_index = True)
+    for json_value in comments_cursor:
+        comments_df = pd.concat([comments_df, pd.DataFrame([json_value])], ignore_index=True)
 
-comments_df["result_json"] = comments_df["result"]
-comments_df["result"] = comments_df["result"].apply(final_result)
-comments_df = comments_df.reset_index(drop = True)
+    comments_df["result_json"] = comments_df["result"]
+    comments_df["result"] = comments_df["result"].apply(final_result)
+    comments_df = comments_df.reset_index(drop = True)
 
 
 #Saving to s3 location
